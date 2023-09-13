@@ -1,0 +1,4 @@
+{:hooks          {:analyze-call {com.akovantsev.destruct/=>  hooks.destruct/=>
+                                 com.akovantsev.destruct/=>> hooks.destruct/=>>}}
+ :config-in-call {com.akovantsev.destruct/=>  {:ignore [:unused-binding]}
+                  com.akovantsev.destruct/=>> {:ignore [:unused-binding]}}}
