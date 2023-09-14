@@ -158,18 +158,23 @@ Seq destructuring can be nested:
 
 **The most important feature**:<br>
 it looks just like input map: no inversion, no funky mirroring.
-Compare these:
+<br>Compare these:
 ```clojure
 (let [t     (:com.my-funky-service.core/type input)
-      attrs (get-in m [:com.my-funky-service.foobar/attributes-by-type t])])
+      attrs (get-in m [:com.my-funky-service.foobar/attributes-by-type t])]
+  [t attrs])
 ```
+(Can you hear the urge to inline `get-in` into body? Call the preist!)
 
 ```clojure
-{:com.my-funky-service.core/entity-type          t
- :com.my-funky-service.foobar/attributes-by-type {t attrs}}
+(=> input
+  {:com.my-funky-service.core/entity-type          t
+   :com.my-funky-service.foobar/attributes-by-type {t attrs}}
+  [t attrs])
 ```
+Have you noticed bug in `let` example? `m` and `input`. I did not! And that's underscores my point.
 
-No shortcuts: you have to spell out keys (except aliasing, ofc).
+**No shortcuts**: you have to spell out keys (except ns aliasing, ofc).
 <br>This means you are not tempted to introduce short simple
 keys **just** because it would make destructuring sweeter (like core's `:keys`).
 <br>This also means there are no generated syms (`{:keys [:a]}` gens `a`),
@@ -254,7 +259,7 @@ To avoid resorting to pre- and post-processing, there are 3 or-like functions av
 ; Metadata must be Symbol,Keyword,String or Map
 ```
 
-but works (I guess?) in `^{:tag ...}`:
+but do work (I guess?) in `^{:tag ...}`:
 ```clojure
 (=> {:a [1 2]}
     {:a a 
@@ -365,8 +370,7 @@ But just to drive it home, here is the example from https://clojure.org/guides/d
 
 ;; :DD 
 ;; Dont you love it when key hangs over the value.
-;; or maybe?
-
+;; so maybe:
 (defn print-contact-info
   [{:keys                                                               [f-name l-name phone company title]
     {fedex-district-id :com.fedex/district-id
@@ -376,8 +380,36 @@ But just to drive it home, here is the example from https://clojure.org/guides/d
   (println f-name l-name "is the" title "at" company))
 
 ;; :DDD
-;; Have you got horisontal scroll already, or not yet?
+;; Have you got horisontal scroll already?
 ;; dude reading the diff would not be trilled.
+
+;; Now last one, for the giggles: 
+;; quick! bind :city/id and :city/name from :city and same for :street!
+;; (took me minutes!)
+(defn print-contact-info
+  [{:keys                                       [f-name l-name phone company title]
+    {fedex-district-id                 :com.fedex/district-id
+     usps-district-id                  :com.ups/district-id
+     :keys                             [street city state zip district-id access-code]
+     {:keys [:city/id :city/name]}     :city
+     {:keys [:street/id :street/name]} :street} :address
+    [fav-hobby second-hobby]                    :hobbies}]
+  (println f-name l-name "is the" title "at" company))
+
+;; oops, nope, sorry
+(defn print-contact-info
+  [{:keys                              [f-name l-name phone company title]
+    {fedex-district-id        :com.fedex/district-id
+     usps-district-id         :com.ups/district-id
+     :keys                    [street city state zip district-id access-code]
+     {city-id   :city/id
+      city-name :city/name}   :city
+     {street-id   :street/name
+      street-name :street/id} :street} :address
+    [fav-hobby second-hobby]           :hobbies}]
+  (println f-name l-name "is the" title "at" company))
+
+;; fucking hell, dude...
 ```
 
 
@@ -394,8 +426,12 @@ But what if destructuring would look like map it destructures?
  :title   title
  :address {:com.fedex/district-id fedex-district-id
            :com.ups/district-id   ups-district-id
-           :street                street
-           :city                  city
+           :street                ^street
+                                  {:street/id   street-id
+                                   :street/name street-name}
+           :city                  ^city
+                                  {:city/id   city-id
+                                   :city/name city-name}
            :state                 state
            :zip                   zip
            :district-id           district-id
@@ -410,7 +446,7 @@ So what?
 
 #### So, reason #1: Prosopagnosia
 
-Core map destructuring forms do not look like maps they are destructuring.
+Core map destructuring forms just do not look like maps they are destructuring.
 
 Having structures as keys sucks. Having nested structures as keys sucks exponentially more.
 It is unusual for the eye to read, and hense: longer to comprehand, easier to make a mistake or misread.
@@ -483,7 +519,7 @@ so having qualified keywords pushes you to harder to read destructuring, making 
 
 #### Reason #3: core map destructuring :or
 
-`:or` does not mean that `clojure.core/or` means. <br>
+`:or` does not mean what `clojure.core/or` means. <br>
 It means "if key is not present, use this value". <br>
 It's ok, but it is a "name reuse", so you have to remember what **this one** does.
 
