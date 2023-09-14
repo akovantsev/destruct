@@ -226,7 +226,7 @@ To avoid resorting to pre- and post-processing, there are 3 or-like functions av
  :baz (ors C B A :foo)}
       ;      ^^^^^^^^^ arbitrary code; here, if :baz key's value is absent or nil - 
       ;      it falls back to B and A bound above, and then to keyword :foo
-      ;    ^ sym name, result will be bound too
+      ;    ^ sym name, result will be bound to
       ;^ one of 3 function names: orp ors ort
 ```
 
@@ -381,7 +381,7 @@ But just to drive it home, here is the example from https://clojure.org/guides/d
 
 ;; :DDD
 ;; Have you got horisontal scroll already?
-;; dude reading the diff would not be trilled.
+;; dude reading the diff would not be thrilled.
 
 ;; Now last one, for the giggles: 
 ;; quick! bind :city/id and :city/name from :city and same for :street!
