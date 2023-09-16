@@ -1,6 +1,6 @@
 # What
 
-Destructure-first `=>` and destructure-last `=>>` destructuring macros
+Destructure-first `=>` and destructure-last `=>>` macros
 
 
 ## Install
@@ -211,10 +211,10 @@ To bind entire map to `sym` - add meta to map destructuring form, just like for 
 
 Neither you controll all the inputs, nor discipline scales, so you basically can't rely on core's `:or`, which applies only when key is **missing**.
 
-To avoid resorting to pre- and post-processing, there are 3 or-like functions available inside `=>` and `=>>`:
+To avoid resorting to pre- and post-processing, there are 3 or-like macros available inside `=>` and `=>>`:
 
 <table>
-<tr><th>description<th>fn<td>missing<td>nil<td>false<td>:foo<td>
+<tr><th><th>macro<td>missing<td>nil<td>false<td>:foo<td>
 <tr><td>"or present"<th> orp <td>-<td>+<td>+<td>+<td>returns first present arg or last arg val
 <tr><td>"or some"   <th> ors <td>-<td>-<td>+<td>+<td>returns first some? arg or last arg val
 <tr><td>"or truthy" <th> ort <td>-<td>-<td>-<td>+<td>returns first truthy arg or last arg val
@@ -227,7 +227,7 @@ To avoid resorting to pre- and post-processing, there are 3 or-like functions av
       ;      ^^^^^^^^^ arbitrary code; here, if :baz key's value is absent or nil - 
       ;      it falls back to B and A bound above, and then to keyword :foo
       ;    ^ sym name, result will be bound to
-      ;^ one of 3 function names: orp ors ort
+      ;^ one of 3 macro names: orp ors ort
 ```
 
 `missing` is visible only within destructuring form **outside** of arbitrary code slots (`key` slot).<br>
@@ -267,6 +267,53 @@ but do work (I guess?) in `^{:tag ...}`:
         [x y]}
     [a     b     x y])
 ;   [[1 2] [1 2] 1 2]
+```
+
+### (some) inline validation
+
+Since `orp ors ort` are macros - you can put (runtime) throw in there, or fetch stuff from db (don't do it):
+```clojure
+(=> {:a 1}
+    {:a (orp a (throw (ex-info "missing :a!" {})))}
+    a)
+  ; 1
+
+(=> {}
+    {:a (orp a (throw (ex-info "missing :a!" {})))}
+    a)
+; Execution error (ExceptionInfo)
+; missing :a!
+```
+
+### Defaults abuse
+
+It sucks when you have to do some intermediate transformations,
+which seem to break "declarative destructuring chain"
+(basically you need to `let` something inbetween lookups).
+
+Don't tell anyone, but you can abuse `orp` macro
+in a made up keys to sneak in arbitrary code, which will bind result to its first arg,
+and, what's even cooler, `=>` toposorts all bindings,
+so you don't even have to pick a proper place to split destructuring with `let`.
+
+Declarative, dude!
+
+```clojure
+(let [from-db! (fn [id]
+                 (println "fetching" id)
+                 {:node-id   id
+                  :node-type "a"})]
+  (=> {:node-id        1
+       :price-by-type  {"a" 5 "b" 6}}
+      {:node-id        id
+       :price-by-type  {t price}
+       :dude...        (orp t (:node-type node))
+       :stop...        (orp node (and id (from-db! id)))}
+      [id t price node]))
+
+fetching 1
+
+;=>   [1 "a" 5 {:node-id 1, :node-type "a"}]
 ```
 
 ### Body

@@ -31,9 +31,9 @@
 ;; Any     +    +     +   +       {:a x}
 
 
-(defn ort [x & ys] (cond (empty? ys) x (= x ::none) (apply ort ys) x x :else (apply ort ys)))
-(defn ors [x & ys] (cond (empty? ys) x (= x ::none) (apply ors ys) (some? x) x :else (apply ors ys)))
-(defn orp [x & ys] (cond (empty? ys) x (= x ::none) (apply orp ys) :else x))
+(defmacro ort ([] nil) ([x] x) ([x & ys] (let [v (gensym "ort__")] `(let [~v ~x] (if (= ~v ::none) (ort ~@ys) (if ~v         ~v (ort ~@ys)))))))
+(defmacro ors ([] nil) ([x] x) ([x & ys] (let [v (gensym "ors__")] `(let [~v ~x] (if (= ~v ::none) (ors ~@ys) (if (some? ~v) ~v (ors ~@ys)))))))
+(defmacro orp ([] nil) ([x] x) ([x & ys] (let [v (gensym "orp__")] `(let [~v ~x] (if (= ~v ::none) (orp ~@ys) ~v)))))
 
 
 (defn render [x]  (if   (= x ::none) nil x))
@@ -48,6 +48,20 @@
                         (pos? i) (recur (next* x) (dec i))
                         :zero    (first x)))
 
+
+;; so this is to reduce text(!) footprint of a macroexpansion, to avoid hitting jvm's limit:
+;; https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.9.1
+;; > The value of the code_length item must be less than 65536.
+;; and because cljs does not have an clojure.core/alias.
+(defn aliases-map! []
+  {;::none  (gensym "none__") ;; is inside of macro, so not gonna be replaced by walk.
+   `subv*  (gensym "subv__")
+   `pop*   (gensym "pop__")
+   `next*  (gensym "next__")
+   `peek*  (gensym "peek__")
+   `get*   (gensym "get__")
+   `nth*   (gensym "nth__")
+   `render (gensym "ren__")})
 
 
 (defn maybe-assoc [x]

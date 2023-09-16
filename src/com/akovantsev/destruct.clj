@@ -1,5 +1,7 @@
 (ns com.akovantsev.destruct
   (:require
+   [clojure.set :as set]
+   [clojure.walk :as walk]
    [com.akovantsev.destruct.impl :as impl]
    [clojure.pprint :refer [pprint]]))
 
@@ -19,28 +21,34 @@
 
 
 (defmacro => [input-form destr-form body]
-  (let [sym#      (gensym "root__")
-        pairs#    (destruct sym# destr-form)
-        bindings# (reduce into [sym# input-form] pairs#)
-        renders#  (->> pairs#
-                    (map first)
-                    (distinct)
-                    (mapv (fn [sym] [sym (list `impl/render sym)])))
-        js?#      (-> &env :ns boolean)
-        print?#   (-> &form meta :tag)
-        coords#   (-> &form meta (select-keys [:line]))]
-    (when print?#
-      (println coords# "bindings:")
-      (pprint bindings#))
-    (list 'let bindings#
-      (when print?#
+  (let [sym      (gensym "root__")
+        pairs    (destruct sym destr-form)
+        aliases  (impl/aliases-map!)
+        renders  (->> pairs
+                   (map first)
+                   (distinct)
+                   (mapv (fn [sym] [sym (list `impl/render sym)])))
+        bindings (concat [[sym input-form]] pairs renders)
+        replaced (walk/postwalk-replace aliases bindings)
+        used     (->> bindings (tree-seq coll? seq) (filter aliases))
+        bindings (reduce into []
+                   (concat
+                     (-> aliases (select-keys used) set/map-invert)
+                     replaced))
+        js?      (-> &env :ns boolean)
+        print?   (-> &form meta :tag)
+        coords   (-> &form meta (select-keys [:line]))]
+    (when print?
+      (println coords "bindings:")
+      (pprint bindings))
+    (list 'let bindings
+      (when print?
         (list 'do
-          (list `println coords# "locals:")
-          (if js?#
+          (list `println coords "locals:")
+          (if js?
             `(cljs.pprint/pprint (impl/locals-map))
             `(clojure.pprint/pprint (impl/locals-map)))))
-      (list 'let (reduce into [] renders#)
-        `(maybe-assoc ~body)))))
+      `(maybe-assoc ~body))))
 
 
 (defmacro =>> [destr-form body input-form]

@@ -4,7 +4,7 @@
    [clojure.string :as str]
    [clojure.walk :as walk]
    [com.akovantsev.destruct :refer [=> =>> maybe-assoc]]
-   [com.akovantsev.destruct.impl :as impl :refer [locals-map vec-destr ort ors orp subv* get* nth* pop* peek* next*]]))
+   [com.akovantsev.destruct.impl :as impl :refer [locals-map vec-destr subv* get* nth* pop* peek* next*]]))
 
 
 
@@ -42,20 +42,20 @@
       form)))
 
 
-(assert= (ort NONE nil false 1) 1)
-(assert= (ort NONE nil false) false)
-(assert= (ort NONE nil) nil)
-(assert= (ort NONE) NONE)
+(assert= (impl/ort NONE nil false 1) 1)
+(assert= (impl/ort NONE nil false) false)
+(assert= (impl/ort NONE nil) nil)
+(assert= (impl/ort NONE) NONE)
 
-(assert= (ors NONE nil false 1) false)
-(assert= (ors NONE nil false) false)
-(assert= (ors NONE nil) nil)
-(assert= (ors NONE) NONE)
+(assert= (impl/ors NONE nil false 1) false)
+(assert= (impl/ors NONE nil false) false)
+(assert= (impl/ors NONE nil) nil)
+(assert= (impl/ors NONE) NONE)
 
-(assert= (orp NONE nil false 1) nil)
-(assert= (orp NONE nil false) nil)
-(assert= (orp NONE nil) nil)
-(assert= (orp NONE) NONE)
+(assert= (impl/orp NONE nil false 1) nil)
+(assert= (impl/orp NONE nil false) nil)
+(assert= (impl/orp NONE nil) nil)
+(assert= (impl/orp NONE) NONE)
 
 
 (assert= (->> :a (get* {})) NONE)
@@ -214,6 +214,11 @@
       {:b b :a ^m {:c (ort a b 1)}}
       [m b a]))
 
+#_
+(walk/macroexpand-all
+  '(=> {:b 2 :a {:c 1}}
+     {:b b :a ^m {:c (ort a b 1)}}
+     [m b a]))
 
 (assert=
   [[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17] 18 19]
@@ -238,8 +243,17 @@
 
 (=> {} ^a {:a ^m {:b [_ x y & z]}}  {:x x :y y :m m :z ^?? z :a a})
 
-(macroexpand-1 '(=> {:a (range 2)} {:a ^a [x | y]} [a x]))
+;(walk/macroexpand-all '(=> {:a (range 2)} {:a ^a [x | (orp y :x)]} [a x]))
 
+
+;; does not throw:
+(assert= 1
+       (=> [1] [(orp x (throw (ex-info "" {})))] x))
+;; throws:
+(assert= :e
+  (try (=> []  [(orp x (throw (ex-info "" {})))] x)
+    (catch #?(:clj Exception :cljs :default) _
+      :e)))
 
 
 (vec-destr '^all [a b ^tail & mid])
