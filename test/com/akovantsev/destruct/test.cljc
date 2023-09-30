@@ -214,6 +214,13 @@
       {:b b :a ^m {:c (ort a b 1)}}
       [m b a]))
 
+
+;; can give name to keys:
+(assert= [1 2 3]
+  (=> {:a 1 2 3}
+      {:a a ^k (inc a) b}
+      [a k b]))
+
 #_
 (walk/macroexpand-all
   '(=> {:b 2 :a {:c 1}}

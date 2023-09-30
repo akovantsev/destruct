@@ -143,16 +143,17 @@
           (throw (ex-info "only up to 2 separators allowed" {'form form})))))))
 
 
+(defn -get-deps [expr]
+  (->> expr
+    (tree-seq coll? seq)
+    (filter symbol?)
+    (remove #{`next* `get* `nth* `pop* `peek* `subv* 'orp 'ors 'ort})
+    (into #{})))
 
 
 (defn destruct [root path x]
   (let [tag      (-> x meta :tag)
-        get-deps (fn [path]
-                   (->> path
-                     (tree-seq coll? seq)
-                     (filter symbol?)
-                     (remove #{`next* `get* `nth* `pop* `peek* `subv* 'orp 'ors 'ort})
-                     (into #{root})))]
+        get-deps (fn [path] (-> path -get-deps (conj root)))]
     (cond
       (vector? x)
       (let [{:keys [A H T L M R] :as db} (vec-destr x)
@@ -200,7 +201,14 @@
 
       (map? x)
       (let [[root* path*] (if tag [tag []] [root path])
-            destruct*     (fn [[k v]] (destruct root* (conj path* (list `get* k)) v))]
+            destruct*     (fn [[k v]]
+                            (if-let [ksym (-> k meta :tag)]
+                              (cons
+                                {:sym  ksym
+                                 :expr (-notag k)
+                                 :defs (-get-deps k)}
+                                (destruct root* (conj path* (list `get* ksym)) v))
+                              (destruct root* (conj path* (list `get* k)) v)))]
         (concat
           (mapcat destruct* x)
           (when tag
