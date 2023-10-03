@@ -20,7 +20,8 @@
     (impl/render-gets)))
 
 
-(defmacro => [input-form destr-form body]
+(defmacro => [input-form destr-form & body]
+  (assert (-> body count odd?))
   (let [sym      (gensym "root__")
         pairs    (destruct sym destr-form)
         aliases  (impl/aliases-map!)
@@ -48,11 +49,16 @@
           (if js?
             `(cljs.pprint/pprint (impl/locals-map))
             `(clojure.pprint/pprint (impl/locals-map)))))
-      `(maybe-assoc ~body))))
+      (if (-> body count (= 1))
+        `(maybe-assoc ~(first body))
+        `(maybe-assoc (=> ~@body))))))
 
 
-(defmacro =>> [destr-form body input-form]
-  (with-meta
-    `(=> ~input-form ~destr-form ~body)
-    (meta &form)))
+(defmacro =>> [destr-form & bodies-and-input-form]
+  ;; (⌐ ͡■ ͜ʖ ͡■)
+  (=> bodies-and-input-form
+    [bodies | input-form]
+    (with-meta
+      `(=> ~input-form ~destr-form ~@bodies)
+      (meta &form))))
 

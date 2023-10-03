@@ -231,6 +231,19 @@
 (=> nil {:a [| y]} [y])
 
 
+(assert= '[(2 3) (:a 2 3)]
+         (=> [1 2 3]
+           [_ & xs]
+           (conj xs :a) ys
+           [xs ys]))
+
+(assert= '[(2 3) (:a 2 3)]
+         (->> [1 2 3]
+           (=>>
+             [_ & xs]
+             (conj xs :a) ys
+             [xs ys])))
+
 #_
 (walk/macroexpand-all
   '(=> {:b 2 :a {:c 1}}
