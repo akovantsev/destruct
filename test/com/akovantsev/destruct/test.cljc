@@ -221,6 +221,16 @@
       {:a a ^k (inc a) b}
       [a k b]))
 
+(=> nil [x] x)
+(=> nil [x &] x)
+(=> nil [x & y] [x y])
+(=> nil [x | y] [x y])
+(let [x 1]
+  (=> nil [| x] [ x]))
+
+(=> nil {:a [| y]} [y])
+
+
 #_
 (walk/macroexpand-all
   '(=> {:b 2 :a {:c 1}}

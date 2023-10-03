@@ -44,6 +44,7 @@
 (defn next* [x]   (cond (= x ::none) ::none :else (next x)))
 (defn peek* [x]   (cond (= x ::none) ::none (empty? x) ::none :else (peek x)))
 (defn get*  [x k] (if   (= x ::none) ::none (if-let [[k v] (find x k)] v ::none)))
+(defn vec*  [x]   (cond (= x ::none) ::none :else (vec x)))
 (defn nth*  [x i] (cond (= x ::none) ::none (empty? x) ::none
                         (pos? i) (recur (next* x) (dec i))
                         :zero    (first x)))
@@ -176,7 +177,7 @@
             [{:root root*
               :path []
               :sym  root*
-              :expr (list `vec root*)
+              :expr (list `vec* root*)
               :deps #{root*}}])
           (when M
             (let [path** (vec (concat path* (repeat nR `pop*) (repeat nL `subv*)))]
