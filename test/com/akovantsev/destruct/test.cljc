@@ -206,7 +206,8 @@
      :b   2}
     {:key       k
      (orp k :b) (orp x :yo)}
-    {:k ^? k :x x}))
+    (maybe-assoc
+      {:k ^? k :x x})))
 
 
 (assert= [{:c 1} 2 1]
@@ -296,7 +297,16 @@
 (macroexpand-1
   '(=> {:a ^m {:b [_ x y & z]}}  {:x x :y y :z ^?? z}))
 
-
+;; testing ^tags in nested => do not disappear:
+(assert= [[1 {[2] 3}] 1 {[2] 3} [2] 3]
+      (=> [1 {[2] 3}]
+          foo
+        (=> foo
+            ^all
+            [one ^two
+                 {^k
+                  [2] v}]
+            [all one two k v])))
 
 (macroexpand-1
   '(maybe-assoc {:x x :y y :m m :z ^?? z}))

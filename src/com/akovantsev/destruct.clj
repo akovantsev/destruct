@@ -50,8 +50,8 @@
             `(cljs.pprint/pprint (impl/locals-map))
             `(clojure.pprint/pprint (impl/locals-map)))))
       (if (-> body count (= 1))
-        `(maybe-assoc ~(first body))
-        `(maybe-assoc (=> ~@body))))))
+        `~(first body)
+        `(=> ~@body)))))
 
 
 (defmacro =>> [destr-form & bodies-and-input-form]

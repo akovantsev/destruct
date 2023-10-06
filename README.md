@@ -318,6 +318,12 @@ fetching 1
 
 ### Body
 
+```clojure
+BREAKING: since this commit, body is no longer wrapped in maybe-assoc,
+since it loses meta, and breaks ^syms of arbitrary nested =>.
+But you can just explicitly wrap body (or parts of) with maybe-assoc. 
+```
+
 While we are inside a macro, why not get rid of more pre-/post-processing?
 
 Don't you hate it when you need to thread big-ass map through `remove-nils` or `assoc-some`, etc. functions?<br>
