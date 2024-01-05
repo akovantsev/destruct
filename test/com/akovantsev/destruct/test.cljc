@@ -314,3 +314,19 @@
 
 (assert= (=> {:a 1 1 :b} {:a x x y} y) :b)
 (=> {:a 1 1 :b} {:c x (or x 1) y} y) :b
+
+;; testing splice
+(assert=
+  (let [path [\a \b]]
+    (=> {\a      {\b 1}
+         [\a \b] 2}
+
+      {^p                       ;; key alias, excludes splice
+       (splice path)       x    ;; splice sym
+       path                y    ;; no splice
+       (splice [\a \b])    z    ;; splice literal
+       (splice (pop path)) w    ;; eval, then splice
+       \a                  {(splice [\b]) q}}  ;; nested
+
+      [p x y z w q]))
+  [[\a \b] 1 2 1 {\b 1} 1])

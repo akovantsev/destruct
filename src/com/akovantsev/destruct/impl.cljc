@@ -48,6 +48,8 @@
 (defn nth*  [x i] (cond (= x ::none) ::none (empty? x) ::none
                         (pos? i) (recur (next* x) (dec i))
                         :zero    (first x)))
+(defn get-in* [x path] (reduce get* x path))
+
 
 
 ;; so this is to reduce text(!) footprint of a macroexpansion, to avoid hitting jvm's limit:
@@ -61,6 +63,7 @@
    `next*  (gensym "next__")
    `peek*  (gensym "peek__")
    `get*   (gensym "get__")
+   `get-in*(gensym "getin__")
    `nth*   (gensym "nth__")
    `render (gensym "ren__")})
 
@@ -143,12 +146,13 @@
               | {:A t0 :H (first a) :R b})
           (throw (ex-info "only up to 2 separators allowed" {'form form})))))))
 
+(defn splice? [k] (and (or (seq? k) (list? k)) (-> k first (= 'splice))))
 
 (defn -get-deps [expr]
   (->> expr
     (tree-seq coll? seq)
     (filter symbol?)
-    (remove #{`next* `get* `nth* `pop* `peek* `subv* 'orp 'ors 'ort})
+    (remove #{`next* `get* `get-in* `nth* `pop* `peek* `subv* 'orp 'ors 'ort 'splice})
     (into #{})))
 
 
@@ -203,13 +207,21 @@
       (map? x)
       (let [[root* path*] (if tag [tag []] [root path])
             destruct*     (fn [[k v]]
-                            (if-let [ksym (-> k meta :tag)]
-                              (cons
-                                {:sym  ksym
-                                 :expr (-notag k)
-                                 :defs (-get-deps k)}
-                                (destruct root* (conj path* (list `get* ksym)) v))
-                              (destruct root* (conj path* (list `get* k)) v)))]
+                            (if (splice? k)
+                              (if-let [ksym (-> k meta :tag)]
+                                (cons
+                                  {:sym  ksym
+                                   :expr (-notag (second k))
+                                   :defs (-get-deps (second k))}
+                                  (destruct root* (conj path* (list `get-in* ksym)) v))
+                                (destruct root* (conj path* (list `get-in* (second k))) v))
+                              (if-let [ksym (-> k meta :tag)]
+                                (cons
+                                  {:sym  ksym
+                                   :expr (-notag k)
+                                   :defs (-get-deps k)}
+                                  (destruct root* (conj path* (list `get* ksym)) v))
+                                (destruct root* (conj path* (list `get* k)) v))))]
         (concat
           (mapcat destruct* x)
           (when tag
