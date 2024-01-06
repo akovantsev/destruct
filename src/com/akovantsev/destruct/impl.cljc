@@ -146,13 +146,13 @@
               | {:A t0 :H (first a) :R b})
           (throw (ex-info "only up to 2 separators allowed" {'form form})))))))
 
-(defn splice? [k] (and (or (seq? k) (list? k)) (-> k first (= 'splice))))
+(defn splice? [k] (and (or (seq? k) (list? k)) (-> k first (= 'in))))
 
 (defn -get-deps [expr]
   (->> expr
     (tree-seq coll? seq)
     (filter symbol?)
-    (remove #{`next* `get* `get-in* `nth* `pop* `peek* `subv* 'orp 'ors 'ort 'splice})
+    (remove #{`next* `get* `get-in* `nth* `pop* `peek* `subv* 'orp 'ors 'ort 'in})
     (into #{})))
 
 

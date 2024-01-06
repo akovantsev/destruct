@@ -322,11 +322,11 @@
          [\a \b] 2}
 
       {^p                       ;; key alias, excludes splice
-       (splice path)       x    ;; splice sym
-       path                y    ;; no splice
-       (splice [\a \b])    z    ;; splice literal
-       (splice (pop path)) w    ;; eval, then splice
-       \a                  {(splice [\b]) q}}  ;; nested
+       (in path)       x    ;; splice sym
+       path            y    ;; no splice
+       (in [\a \b])    z    ;; splice literal
+       (in (pop path)) w    ;; eval, then splice
+       \a              {(in [\b]) q}}  ;; nested
 
       [p x y z w q]))
   [[\a \b] 1 2 1 {\b 1} 1])
