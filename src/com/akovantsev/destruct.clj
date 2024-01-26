@@ -2,8 +2,7 @@
   (:require
    [clojure.set :as set]
    [clojure.walk :as walk]
-   [com.akovantsev.destruct.impl :as impl]
-   [clojure.pprint :refer [pprint]]))
+   [com.akovantsev.destruct.impl :as impl]))
 
 
 
@@ -22,36 +21,29 @@
 
 (defmacro => [input-form destr-form & body]
   (assert (-> body count odd?))
-  (let [sym      (gensym "root__")
+  (let [print?   (-> &form meta :tag boolean)
+        sym      (gensym "root__")
         pairs    (destruct sym destr-form)
-        aliases  (impl/aliases-map!)
+        id       (name (gensym ""))
+        aliases  (impl/aliases-map! id)
         renders  (->> pairs
                    (map first)
                    (distinct)
                    (mapv (fn [sym] [sym (list `impl/render sym)])))
-        bindings (concat [[sym input-form]] pairs renders)
+        pairs+   (cond->> pairs
+                   print? (map (fn [[sym expr]]
+                                 [sym (list `impl/spy sym expr)])))
+        bindings (concat [[sym input-form]] pairs+ renders)
         replaced (walk/postwalk-replace aliases bindings)
         used     (->> bindings (tree-seq coll? seq) (filter aliases))
         bindings (reduce into []
                    (concat
                      (-> aliases (select-keys used) set/map-invert)
-                     replaced))
-        js?      (-> &env :ns boolean)
-        print?   (-> &form meta :tag)
-        coords   (-> &form meta (select-keys [:line]))]
-    (when print?
-      (println coords "bindings:")
-      (pprint bindings))
+                     replaced))]
     (list 'let bindings
-      (when print?
-        (list 'do
-          (list `println coords "locals:")
-          (if js?
-            `(cljs.pprint/pprint (impl/locals-map))
-            `(clojure.pprint/pprint (impl/locals-map)))))
       (if (-> body count (= 1))
         `~(first body)
-        `(=> ~@body)))))
+        `^{:tag ~print?} (=> ~@body)))))
 
 
 (defmacro =>> [destr-form & bodies-and-input-form]
@@ -60,5 +52,4 @@
     [bodies | input-form]
     (with-meta
       `(=> ~input-form ~destr-form ~@bodies)
-      (meta &form))))
-
+      {:tag (-> &form meta :tag boolean)})))

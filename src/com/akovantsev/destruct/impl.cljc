@@ -2,20 +2,24 @@
   #?(:cljs (:require-macros [com.akovantsev.destruct.impl :refer [locals-map]]))
   (:refer-clojure :exclude [some])
   (:require
-   [#?(:clj clojure.pprint :cljs cljs.pprint) :refer [pprint]]
+   [com.akovantsev.pp :as pp]
    [clojure.set :as set]
    [clojure.walk :as walk]))
 
 #?(:clj
-    (defmacro locals-map []
+    (defmacro locals-map [& banned]
       ;; https://gist.github.com/noisesmith/3490f2d3ed98e294e033b002bc2de178
       (let [ks (if (->> &env :ns)
-                 (->> &env :locals keys (remove #{'_}))
+                 (->> &env :locals keys (remove #{'_}) (remove (set banned)))
                  (->> &env keys (remove #{'_})))]
         (zipmap (map #(list 'quote %) ks) ks))))
 
-
-(defn spy [x] (pprint x) x)
+(defmacro spy [sym x]
+  (let [x#      (gensym)
+        pref#   (format ";; %s %s\n" sym (pr-str x))]
+    `(let [~x# ~x]
+       (println (str ~pref# (pp/string ~x#)))
+       ~x#)))
 
 (defn quoted? [form] (and (seq? form) (= (first form) 'quote)))
 
@@ -56,16 +60,19 @@
 ;; https://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.9.1
 ;; > The value of the code_length item must be less than 65536.
 ;; and because cljs does not have an clojure.core/alias.
-(defn aliases-map! []
-  {;::none  (gensym "none__") ;; is inside of macro, so not gonna be replaced by walk.
-   `subv*  (gensym "subv__")
-   `pop*   (gensym "pop__")
-   `next*  (gensym "next__")
-   `peek*  (gensym "peek__")
-   `get*   (gensym "get__")
-   `get-in*(gensym "getin__")
-   `nth*   (gensym "nth__")
-   `render (gensym "ren__")})
+(defn aliases-map! [id]
+  (let [g #(symbol (str % id))]
+    {;::none  (gensym "none__") ;; is inside of macro, so not gonna be replaced by walk.
+     ;`spy    (gensym "spy__")
+     `vec*   (g "vec*__")
+     `subv*  (g "subv__")
+     `pop*   (g "pop__")
+     `next*  (g "next__")
+     `peek*  (g "peek__")
+     `get*   (g "get__")
+     `get-in*(g "getin__")
+     `nth*   (g "nth__")
+     `render (g "ren__")}))
 
 
 (defn maybe-assoc [x]
