@@ -16,10 +16,12 @@
 
 (defmacro spy [sym x]
   (let [x#      (gensym)
-        pref#   (format ";; %s %s\n" sym (pr-str x))]
-    `(let [~x# ~x]
-       (println (str ~pref# (pp/string ~x#)))
-       ~x#)))
+        pref#   (format ";; %s %s" sym (pr-str x))]
+    `(do
+       (println ~pref#)
+       (let [~x# ~x]
+         (println (pp/string ~x#))
+         ~x#))))
 
 (defn quoted? [form] (and (seq? form) (= (first form) 'quote)))
 

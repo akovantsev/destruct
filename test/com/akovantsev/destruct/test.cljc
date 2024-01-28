@@ -315,6 +315,8 @@
 (assert= (=> {:a 1 1 :b} {:a x x y} y) :b)
 (=> {:a 1 1 :b} {:c x (or x 1) y} y) :b
 
+#_(do ^?(=> {:a 1} {:a a a (orp b (throw (ex-info "yo" {})))} [a b]))
+
 ;; testing splice
 (assert=
   (let [path [\a \b]]
