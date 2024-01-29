@@ -312,14 +312,21 @@
   '(maybe-assoc {:x x :y y :m m :z ^?? z}))
 
 
-(assert= (=> {:a 1 1 :b} {:a x x y} y) :b)
-(=> {:a 1 1 :b} {:c x (or x 1) y} y) :b
+(assert= ^:blet (=> {:a 1 1 :b} {:a x x y} y) :b)
+(do ^:blet (=> {:a 1 1 :b} {:c x (or x 1) y} y))
 
 #_(do ^?(=> {:a 1} {:a a a (orp b (throw (ex-info "yo" {})))} [a b]))
+
+#_(clojure.walk/macroexpand-all
+    '(do ^:blet ^? (=> {:a 1 1 :b} {:c x (orp x 1) y} y)))
+
+#_(clojure.walk/macroexpand-all
+    '(do (=> {:a 1 1 :b} {:c x (orp x 1) y} y)))
 
 ;; testing splice
 (assert=
   (let [path [\a \b]]
+    ^:blet
     (=> {\a      {\b 1}
          [\a \b] 2}
 
@@ -332,3 +339,7 @@
 
       [p x y z w q]))
   [[\a \b] 1 2 1 {\b 1} 1])
+
+
+(walk/macroexpand-all '       (=> [] [a b c d e] a))
+(walk/macroexpand-all '^:blet (=> [] [a b c d e] a))

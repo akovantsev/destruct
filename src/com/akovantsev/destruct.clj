@@ -22,6 +22,7 @@
 (defmacro => [input-form destr-form & body]
   (assert (-> body count odd?))
   (let [print?   (-> &form meta :tag boolean)
+        blet?    (-> &form meta :blet)
         sym      (gensym "root__")
         pairs    (destruct sym destr-form)
         id       (name (gensym ""))
@@ -40,7 +41,9 @@
                    (concat
                      (-> aliases (select-keys used) set/map-invert)
                      replaced))]
-    (list 'let bindings
+    (list
+      (if blet? 'com.akovantsev.blet.core/blet 'let)
+      bindings
       (if (-> body count (= 1))
         `~(first body)
         `^{:tag ~print?} (=> ~@body)))))

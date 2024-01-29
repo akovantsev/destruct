@@ -44,6 +44,7 @@ Destructure-first `=>` and destructure-last `=>>` macros
                                     ;^ d = (get arg [(inc a) b]) = 4
 ```
 
+pro tip: try it with `^:blet` and/or `^?` meta. (see https://github.com/akovantsev/blet) 
 
 
 ## Features
