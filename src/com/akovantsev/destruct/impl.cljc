@@ -2,7 +2,6 @@
   #?(:cljs (:require-macros [com.akovantsev.destruct.impl :refer [locals-map]]))
   (:refer-clojure :exclude [some])
   (:require
-   [com.akovantsev.pp :as pp]
    [clojure.set :as set]
    [clojure.walk :as walk]))
 
@@ -14,13 +13,15 @@
                  (->> &env keys (remove #{'_})))]
         (zipmap (map #(list 'quote %) ks) ks))))
 
+(def ^:dynamic *pp-fn* pr-str)
+
 (defmacro spy [sym x]
   (let [x#      (gensym)
         pref#   (format ";; %s %s" sym (pr-str x))]
     `(do
        (println ~pref#)
        (let [~x# ~x]
-         (println (pp/string ~x#))
+         (println (*pp-fn* ~x#))
          ~x#))))
 
 (defn quoted? [form] (and (seq? form) (= (first form) 'quote)))

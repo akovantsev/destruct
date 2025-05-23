@@ -3,6 +3,7 @@
   (:require
    [clojure.string :as str]
    [clojure.walk :as walk]
+   ;[com.akovantsev.blet.core]
    [com.akovantsev.destruct :refer [=> =>> maybe-assoc]]
    [com.akovantsev.destruct.impl :as impl :refer [locals-map vec-destr subv* get* nth* pop* peek* next*]]))
 
@@ -314,6 +315,7 @@
 
 (assert= ^:blet (=> {:a 1 1 :b} {:a x x y} y) :b)
 (do ^:blet (=> {:a 1 1 :b} {:c x (or x 1) y} y))
+(do ^p (=> {:a 1 1 :b} {:c x (or x 1) y} y))
 
 #_(do ^?(=> {:a 1} {:a a a (orp b (throw (ex-info "yo" {})))} [a b]))
 

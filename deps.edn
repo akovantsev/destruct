@@ -1,8 +1,13 @@
 {:paths   ["src"]
 
- :deps    {github-akovantsev/pp
-           {:git/url "https://github.com/akovantsev/pp"
-            :git/sha "1357db37ce27419441696c6701ae27f163e665ea"}}
+ :deps
+ {}
+ #_
+ {org.clojure/clojure
+  {:mvn/version "1.11.1"}
+  github-akovantsev/blet
+  {:git/url "https://github.com/akovantsev/blet"
+   :git/sha "4fda0e358150370f581fb2a9d286b22be878b850"}}
 
  :aliases {:cljs {:extra-paths ["test" "cljs-test-runner-out/gen"]
                   :extra-deps  {org.clojure/clojure       {:mvn/version "1.11.1"}
