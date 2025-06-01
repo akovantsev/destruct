@@ -312,7 +312,7 @@
 (macroexpand-1
   '(maybe-assoc {:x x :y y :m m :z ^?? z}))
 
-
+;(require '[com.akovantsev.blet.core])
 (assert= ^:blet (=> {:a 1 1 :b} {:a x x y} y) :b)
 (do ^:blet (=> {:a 1 1 :b} {:c x (or x 1) y} y))
 (do ^p (=> {:a 1 1 :b} {:c x (or x 1) y} y))

@@ -245,7 +245,7 @@
           [{:root root
             :path path
             :sym  sym
-            :expr (apply list '-> root path)
+            :expr (apply list 'clojure.core/-> root path)
             :deps (get-deps path)}]))
 
       (symbol? x)
@@ -253,7 +253,7 @@
         [{:root root
           :path path
           :sym  x
-          :expr (apply list '-> root path)
+          :expr (apply list 'clojure.core/-> root path)
           :deps (get-deps path)}])
 
       :else
